@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="auth/campusconnect/db" VERSION="20140819" COMMENT="XMLDB file for Moodle auth/campusconnect"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="auth_campusconnect" COMMENT="Stores details of the UID and ECSID for users who arrive via ECS SSO.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="pids" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Stores the ids of participants that this user has come from as ecsid_pid"/>
+        <FIELD NAME="personid" TYPE="char" LENGTH="60" NOTNULL="false" SEQUENCE="false" COMMENT="The UID by which the user is known on the remote system"/>
+        <FIELD NAME="username" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false" COMMENT="The generated username for this user"/>
+        <FIELD NAME="lastenroled" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="The timestamp for when the user last enroled in a course"/>
+        <FIELD NAME="personidtype" TYPE="char" LENGTH="40" NOTNULL="true" DEFAULT="ecs_uid" SEQUENCE="false" COMMENT="The type of personid that was sent when the user was first authenticated."/>
+        <FIELD NAME="suspended" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="Record whether or not the user was suspended, so can spot changes when 'user_updated' events occur."/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="personid" UNIQUE="true" FIELDS="personid, personidtype"/>
+        <INDEX NAME="username" UNIQUE="true" FIELDS="username"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

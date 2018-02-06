@@ -1,0 +1,10 @@
+{
+    "name": "moodle-local_campusconnect-participantsettings",
+    "builds": {
+        "moodle-local_campusconnect-participantsettings": {
+            "jsfiles": [
+                "participantsettings.js"
+            ]
+        }
+    }
+}

@@ -1,0 +1,8 @@
+Single course:
+role = roles in all groups OR (if none specified) role for membership OR (if not specified) default role
+
+Multiple courses:
+role = roles in groups for course OR (if not specified) role for membership OR (if not specified) default role
+
+If course has no groups, ignore 'groups' values
+If course has groups and groups not specified for the member, then enrol into the first course, but not any groups.

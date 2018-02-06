@@ -1,0 +1,104 @@
+.itsme {
+    color: blue;
+}
+
+#campusconnect_dirtree li,
+#campusconnect_categorytree li {
+    list-style: none;
+}
+
+#campusconnect_dirtree .status_pending_unmapped {
+    font-weight: bold;
+}
+#campusconnect_dirtree .status_pending_manual {
+    font-weight: bold;
+    font-style: italic;
+    color: #ccc;
+}
+#campusconnect_dirtree .status_pending_automatic {
+    font-style: italic;
+    color: #ccc;
+}
+#campusconnect_dirtree .status_mapped_manual {
+}
+#campusconnect_dirtree .status_mapped_automatic {
+}
+#campusconnect_dirtree .status_deleted {
+    color: red;
+    text-decoration: line-through;
+}
+
+#campusconnect_categorytree .mapped_category {
+    border: dashed green 2px;
+    padding: 0 3px;
+}
+
+.path-admin-local-campusconnect input.submit {
+    margin-right: 5px;
+    margin-bottom: 5px;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+
+.generaltable #campusconnect_dirtree td {
+    border: 0;
+}
+
+.campusconnect_refresh div.singlebutton {
+    display: inline-block;
+    margin-left: 10px;
+}
+
+.campusconnect_refreshdone {
+    color: black;
+    width: 90%;
+    border: 1px solid #00cc00;
+    background-color: #ccffcc;
+    margin: auto;
+    padding: 1em;
+    text-align: center;
+}
+
+.campusconnect_metadata .mform .fitem .fitemtitle {
+    width: 40%;
+}
+
+table.campusconnect_imported {
+    margin-top: 1em;
+}
+
+.filtering_categorylist .selectedcategory {
+    font-weight: bold;
+}
+
+.filtering_categorylist .activecategory {
+    font-weight: bold;
+    font-style: italic;
+}
+
+.filtering_categorylist .activecategory .selectedcategory {
+    font-style: normal;
+}
+
+.coursefiltertable .mform .fitem .fitemtitle {
+    width: 35%;
+}
+
+.participantsettings label.disabled {
+    color: #aaa;
+    font-style: italic;
+}
+
+.userdatamappingtable {
+    width: 550px;
+    border: 1px solid #ccc;
+}
+.userdatamappingtable td {
+    border-top: 1px solid #ccc;
+}
+.userdatamappingtable thead {
+    background-color: #eee;
+}
+.userdatamappingtable span.indentfield {
+    margin-left: 15%;
+}

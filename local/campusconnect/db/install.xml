@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/campusconnect/db" VERSION="20161117" COMMENT="XMLDB file for Moodle local/campusconnect"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="local_campusconnect_ecs" COMMENT="Settings for connecting to different ECS">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="enabled" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="1" SEQUENCE="false" COMMENT="Is this ECS currently active?"/>
+        <FIELD NAME="name" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The local name used to identify this ECS"/>
+        <FIELD NAME="url" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The URL of the ECS"/>
+        <FIELD NAME="auth" TYPE="int" LENGTH="3" NOTNULL="false" DEFAULT="2" SEQUENCE="false" COMMENT="The type of authentication to use (1 = none, 2 = http, 3 = certificate)"/>
+        <FIELD NAME="ecsauth" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The ecsauth name to add to the header when using no authentication"/>
+        <FIELD NAME="httpuser" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The username to use with basic http auth"/>
+        <FIELD NAME="httppass" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The password to use with basic http auth"/>
+        <FIELD NAME="cacertpath" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The path to the CA certificate when using certificate authentication"/>
+        <FIELD NAME="certpath" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The certificate path to use with certificate authentication"/>
+        <FIELD NAME="keypath" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The path to the key file for use with certificate authentication."/>
+        <FIELD NAME="keypass" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The key password for use with certificate authentication."/>
+        <FIELD NAME="crontime" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="How often to check for updates from this ECS server (in seconds)"/>
+        <FIELD NAME="lastcron" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="The last time we checked for updates from this ECS server"/>
+        <FIELD NAME="importcategory" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="The course category id to put imported courses into"/>
+        <FIELD NAME="importrole" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false" COMMENT="The shortname of the role to assign to incoming users"/>
+        <FIELD NAME="importperiod" TYPE="int" LENGTH="6" NOTNULL="false" DEFAULT="6" SEQUENCE="false" COMMENT="The number of months to keep imported users active"/>
+        <FIELD NAME="notifyusers" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Comma-separated list of email addresses to notify about new users via ECS"/>
+        <FIELD NAME="notifycontent" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Comma-separated list of email addresses to notify about new external courses via ECS"/>
+        <FIELD NAME="notifycourses" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Comma-separated list of email addresses to notify about newly exported courses via ECS"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="importcategory" TYPE="foreign" FIELDS="importcategory" REFTABLE="course_categories" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="local_campusconnect_eventin" COMMENT="Stores incoming events from the ECS server, until they have been processed">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="type" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false" COMMENT="The resource type the event is linked to"/>
+        <FIELD NAME="resourceid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="The ID of the resource on the ECS server"/>
+        <FIELD NAME="serverid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="The ECS server this event came from"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="false" SEQUENCE="false" COMMENT="The status of the event ('created', 'updated', 'destroyed', 'new_export')"/>
+        <FIELD NAME="failcount" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Counts how many times this message has failed to be processed"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="serverid" TYPE="foreign" FIELDS="serverid" REFTABLE="local_campusconnect_ecs" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="local_campusconnect_clink" COMMENT="Stores information about course links">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="The ID of the 'fake' course that will redirect to this link"/>
+        <FIELD NAME="url" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The external URL to redirect to"/>
+        <FIELD NAME="resourceid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="The ID of this course link on the ECS server"/>
+        <FIELD NAME="ecsid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="The ID of the ECS server that this link came from"/>
+        <FIELD NAME="mid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="The member ID of the site this course came from"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="courseid" TYPE="foreign" FIELDS="courseid" REFTABLE="course" REFFIELDS="id"/>
+        <KEY NAME="ecsid" TYPE="foreign" FIELDS="ecsid" REFTABLE="local_campusconnect_ecs" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="local_campusconnect_part" COMMENT="Settings for participants in an ECS">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="ecsid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="ECS that this participant is found on"/>
+        <FIELD NAME="mid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="The ID of the participant in the community on the ECS server"/>
+        <FIELD NAME="pid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="export" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="Should courses be exported to this participant?"/>
+        <FIELD NAME="import" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="Should course be imported from this participant?"/>
+        <FIELD NAME="importtype" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="1" SEQUENCE="false" COMMENT="How to treat courses imported from this participant"/>
+        <FIELD NAME="displayname" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="active" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="1" SEQUENCE="false" COMMENT="When the list was last refreshed, was this participant in the list?"/>
+        <FIELD NAME="exportenrolment" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="exporttoken" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="importenrolment" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="importtoken" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="uselegacy" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="1 if the legacy URL params should be sent when following course links"/>
+        <FIELD NAME="personuidtype" TYPE="char" LENGTH="25" NOTNULL="false" DEFAULT="ecs_uid" SEQUENCE="false" COMMENT="The personuidtype to use when following course links"/>
+        <FIELD NAME="exportfields" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Comma-separated list of user fields to include in the export"/>
+        <FIELD NAME="exportfieldmapping" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Mapping of ECS fields =&amp;gt; Moodle fields (serialised)"/>
+        <FIELD NAME="importfieldmapping" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Mapping ecs field =&amp;gt; Moodle field (serialised)"/>
+        <FIELD NAME="orgabbr" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The abbreviation for this organisation"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="ecsid" TYPE="foreign" FIELDS="ecsid" REFTABLE="local_campusconnect_ecs" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ecsid_mid" UNIQUE="true" FIELDS="ecsid, mid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_campusconnect_mappings" COMMENT="Stores the metadata mappings for each ECS course import/export">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="field" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false" COMMENT="The destination field for the mapping"/>
+        <FIELD NAME="setto" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The field / string to set the destination field to"/>
+        <FIELD NAME="ecsid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="The ECS this mapping is associated with"/>
+        <FIELD NAME="type" TYPE="int" LENGTH="4" NOTNULL="false" SEQUENCE="false" COMMENT="The type of mapping (1 = import_course, 2 = import_external_course, 3 = export_course, 4 = export_external_course)"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="ecsid" TYPE="foreign" FIELDS="ecsid" REFTABLE="local_campusconnect_ecs" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="local_campusconnect_export" COMMENT="Details of the courses that are exported via the ECS">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="The course being exported"/>
+        <FIELD NAME="ecsid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="The ECS being exported to"/>
+        <FIELD NAME="mids" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Comma-separated list of participant ids that this course is shared with"/>
+        <FIELD NAME="status" TYPE="int" LENGTH="4" NOTNULL="false" SEQUENCE="false" COMMENT="What has happened to this export since the ECS was last informed (0 = nothing, 1 = created, 2 = updated, 3 = deleted)"/>
+        <FIELD NAME="resourceid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="The ID of the resource on the ECS server"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="courseid" TYPE="foreign" FIELDS="courseid" REFTABLE="course" REFFIELDS="id"/>
+        <KEY NAME="ecsid" TYPE="foreign" FIELDS="ecsid" REFTABLE="local_campusconnect_ecs" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="local_campusconnect_dirroot" COMMENT="Contains the root nodes of the directory trees passed on from the CMS via the ECS server.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="resourceid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The ID of the resource on the ECS server"/>
+        <FIELD NAME="rootid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="The ID of the root node on the CMS"/>
+        <FIELD NAME="title" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="The name of the directory node from the CMS"/>
+        <FIELD NAME="ecsid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The ID of the ECS that this resource came from"/>
+        <FIELD NAME="mid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The participant this directory tree came from"/>
+        <FIELD NAME="categoryid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="The Moodle category this directory tree is mapped on to (null for none)"/>
+        <FIELD NAME="mappingmode" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The mapping mode of this tree (0 - pending, 1 - whole tree, 2 - manual mapping, 3 - deleted)"/>
+        <FIELD NAME="takeovertitle" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Should the directory tree take over the category title?"/>
+        <FIELD NAME="takeoverposition" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Should directory tree take over the category sort order?"/>
+        <FIELD NAME="takeoverallocation" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Should the tree take over directory allocations?"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="ecsid" TYPE="foreign" FIELDS="ecsid" REFTABLE="local_campusconnect_ecs" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="rootid" UNIQUE="true" FIELDS="rootid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_campusconnect_dir" COMMENT="A directory node from the CMS via the ECS server">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="resourceid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The ID of the resource on the ECS server"/>
+        <FIELD NAME="rootid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="The ID of the root of the directory tree"/>
+        <FIELD NAME="directoryid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="The ID of the directory on the CMS"/>
+        <FIELD NAME="title" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="The title of the directory, from the CMS"/>
+        <FIELD NAME="parentid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="The directoryid of the parent directory"/>
+        <FIELD NAME="sortorder" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="Used to define the order in which directories should be displayed"/>
+        <FIELD NAME="categoryid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="The Moodle category this directory is mapped onto (null if not mapped)"/>
+        <FIELD NAME="mapping" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The mapping mode (0 - automatic, 1 - manual, 2 - deleted)"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="rootid" UNIQUE="false" FIELDS="rootid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_campusconnect_crs" COMMENT="Stores information about courses created by campusconnect">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The ID of the course that has been created"/>
+        <FIELD NAME="resourceid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The resourceid on the ECS server"/>
+        <FIELD NAME="cmsid" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The ID by which the course is known on the CMS"/>
+        <FIELD NAME="ecsid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The ECS server this course came from"/>
+        <FIELD NAME="mid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The participant this course came from"/>
+        <FIELD NAME="internallink" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Is this an internal link, or is it the 'real' course?"/>
+        <FIELD NAME="urlresourceid" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="The resourceid for the course_url resource sent back to the ECS server"/>
+        <FIELD NAME="urlstatus" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="Does the course_url need updating on the ECS server (0 = up to date; 1 = created; 2 = updated; 3 = deleted)"/>
+        <FIELD NAME="sortorder" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="The order in which courses should be displayed (if sortorder is specified)"/>
+        <FIELD NAME="directoryid" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The CMS directoryid this course is allocated within"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="courseid" TYPE="foreign-unique" FIELDS="courseid" REFTABLE="course" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="local_campusconnect_rolemap" COMMENT="Role mapping">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="ccrolename" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="moodleroleid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="local_campusconnect_mbr" COMMENT="Stored details of requested membership lists from the ECS">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="resourceid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="The resourceid for this membership list on the ECS"/>
+        <FIELD NAME="cmscourseid" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The identifier by which the course is known on the CMS"/>
+        <FIELD NAME="personid" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The ID by which the user is known on the CMS"/>
+        <FIELD NAME="personidtype" TYPE="char" LENGTH="40" NOTNULL="true" DEFAULT="ecs_login" SEQUENCE="false" COMMENT="The type of the personid"/>
+        <FIELD NAME="role" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The role requested by the CMS"/>
+        <FIELD NAME="status" TYPE="int" LENGTH="4" NOTNULL="false" SEQUENCE="false" COMMENT="The current status of the membership list request - role assigned (0), request created (1), updated (2), to be deleted (3)"/>
+        <FIELD NAME="parallelgroups" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="List of the parallel groups this user should be enrolled into"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="personid" UNIQUE="false" FIELDS="personid, personidtype"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_campusconnect_notify" COMMENT="Stores a list of notifications to send out to users.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="ecsid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The ECS that this notification relates to"/>
+        <FIELD NAME="type" TYPE="int" LENGTH="4" NOTNULL="true" SEQUENCE="false" COMMENT="The type of notification to send out."/>
+        <FIELD NAME="subtype" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="0 - create, 1 - update, 2 - delete resource"/>
+        <FIELD NAME="data" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="The ID of the relevant object to send information about"/>
+        <FIELD NAME="extra" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="An extra string to display beside the notification item"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ecsid_type" UNIQUE="false" FIELDS="ecsid, type" COMMENT="Allows you to quickly get all the notifications of a particular type for an ECS"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_campusconnect_filter" COMMENT="Controls the mapping of imported courses onto categories">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="categoryid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The destination category for this mapping"/>
+        <FIELD NAME="attribute" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false" COMMENT="The name of the attribute this mapping uses"/>
+        <FIELD NAME="words" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Comma-separated list of words to filter by (blank to accept all words)."/>
+        <FIELD NAME="createsubdirectories" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="Controls whether or not subdirectories should be created (named after the attribute values)"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="categoryid" TYPE="foreign" FIELDS="categoryid" REFTABLE="category" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="local_campusconnect_pgroup" COMMENT="Stores details of parallel groups for students to enrol in.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="ecsid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The ECS that this group came from"/>
+        <FIELD NAME="resourceid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The course resource that this group relates to"/>
+        <FIELD NAME="grouptitle" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The title of the group (from the CMS)"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The course that the group belongs to"/>
+        <FIELD NAME="groupid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The ID of the Moodle group this maps onto"/>
+        <FIELD NAME="cmscourseid" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="The cms course this group is part of"/>
+        <FIELD NAME="groupnum" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="The number of this group within the list of groups for the course"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="ecsid" TYPE="foreign" FIELDS="ecsid" REFTABLE="local_campusconnect_ecs" REFFIELDS="id"/>
+        <KEY NAME="courseid" TYPE="foreign" FIELDS="courseid" REFTABLE="course" REFFIELDS="id"/>
+        <KEY NAME="groupid" TYPE="foreign" FIELDS="groupid" REFTABLE="group" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="resourceid" UNIQUE="false" FIELDS="resourceid, ecsid"/>
+        <INDEX NAME="cmscourseid" UNIQUE="false" FIELDS="cmscourseid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_campusconnect_enrex" COMMENT="Queue of enrolment status notifications to export to the ECS">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The course that the user has enrolled / unenrolled"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false" COMMENT="The status message to send to the ECS"/>
+        <FIELD NAME="notifiedecsids" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The ECS that have been notified, so we know when we can delete this record"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="courseid" TYPE="foreign" FIELDS="courseid" REFTABLE="course" REFFIELDS="id"/>
+        <KEY NAME="userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+  </TABLES>
+</XMLDB>
