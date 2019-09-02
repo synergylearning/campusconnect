@@ -105,6 +105,19 @@ class auth_plugin_campusconnect extends auth_plugin_base {
             $ccuser = get_complete_user_data('id', $id);
         }
 
+        $systemcontext = context_system::instance();
+        $ecssettings = new ecssettings($userdetails->ecsid);
+        $defaultrole = $ecssettings->get_import_role();
+        $defaultroleid = $DB->get_field('role', 'id', array('shortname' => $defaultrole));
+        role_assign($defaultroleid, $ccuser->id, $systemcontext->id);
+
+        if (isset($userdetails->ecsid)) {
+            unset ($userdetails->ecsid);
+        }
+        if (isset($ccuser->ecsid)) {
+            unset ($ccuser->ecsid);
+        }
+
         self::log("User account details:");
         self::log_print_r($ccuser);
 
@@ -362,6 +375,8 @@ class auth_plugin_campusconnect extends auth_plugin_base {
         if (!$userdetails->username) {
             return null; // Something went wrong with getting a username for this user.
         }
+
+        $userdetails->ecsid = $ecsid;
 
         return $userdetails;
     }
