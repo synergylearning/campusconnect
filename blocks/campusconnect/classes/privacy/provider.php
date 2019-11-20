@@ -1,5 +1,5 @@
 <?php
-// This file is part of the CampusConnect plugin for Moodle - http://moodle.org/
+// This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -15,19 +15,21 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * version file for CampusConnect block
+ * Privacy provider - no user information stored.
  *
- * @package    block_campusconnect
- * @copyright  2012 Synergy Learning
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   block_campusconnect
+ * @copyright 2019 Davo Smith, Synergy Learning
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
+namespace block_campusconnect\privacy;
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2019111300;
-$plugin->requires = 2017051505; // Moodle 3.3.5+
-$plugin->cron = 0; // Does not use cron
-$plugin->component = 'block_campusconnect';
-$plugin->maturity = MATURITY_STABLE;
-$plugin->release = '3.3.5+ (Build: 2019111300)';
-$plugin->dependencies = array('local_campusconnect' => 2012062700);
+class provider implements \core_privacy\local\metadata\null_provider {
+    use \core_privacy\local\legacy_polyfill;
+
+    public static function _get_reason() {
+        return 'privacy:null_reason';
+    }
+}

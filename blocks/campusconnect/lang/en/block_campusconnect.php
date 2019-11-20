@@ -32,3 +32,4 @@ $string['noexportparticipants'] = 'There are no participants available to export
 $string['notexported'] = 'Not exported';
 $string['notsiteid'] = 'You cannot export the SITE course via CampusConnect';
 $string['pluginname'] = 'Export course';
+$string['privacy:null_reason'] = 'The CampusConnect block does not store any personal information.';

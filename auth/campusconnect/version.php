@@ -23,8 +23,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2016100301;        // The current plugin version (Date: YYYYMMDDXX)
-$plugin->requires = 2015051100;        // M2.9+
+$plugin->version = 2019111300;        // The current plugin version (Date: YYYYMMDDXX)
+$plugin->requires = 2017051505;        // M3.3.5+
 $plugin->cron = 300;
 $plugin->component = 'auth_campusconnect';        // Full name of the plugin (used for diagnostics)
 $plugin->dependencies = array('local_campusconnect' => 2012100200);

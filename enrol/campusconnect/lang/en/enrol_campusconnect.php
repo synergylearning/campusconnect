@@ -24,3 +24,4 @@
 
 $string['pluginname'] = 'CampusConnect enrolments';
 $string['pluginname_desc'] = 'This plugin looks after enrolments created on request by the Campus Management System (CMS) via the ECS server';
+$string['privacy:null_reason'] = 'The CampusConnect enrolment plugin does not store any information in addition to that which is already managed by the core enrolment code.';
