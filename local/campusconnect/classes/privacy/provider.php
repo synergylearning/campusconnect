@@ -26,22 +26,23 @@ namespace local_campusconnect\privacy;
 
 use core_privacy\local\metadata\collection;
 use core_privacy\local\request\approved_contextlist;
+use core_privacy\local\request\approved_userlist;
 use core_privacy\local\request\contextlist;
 use core_privacy\local\request\helper;
-use core_privacy\local\request\transform;
+use core_privacy\local\request\userlist;
 use core_privacy\local\request\writer;
 
 defined('MOODLE_INTERNAL') || die();
 
 class provider implements \core_privacy\local\metadata\provider,
-                          \core_privacy\local\request\plugin\provider {
-    use \core_privacy\local\legacy_polyfill;
+                          \core_privacy\local\request\plugin\provider,
+                          \core_privacy\local\request\core_userlist_provider {
 
     /**
      * @param collection $collection
      * @return collection
      */
-    public static function _get_metadata(collection $collection) {
+    public static function get_metadata(collection $collection): collection {
         $collection->add_database_table(
             'local_campusconnect_mbr',
             [
@@ -60,9 +61,9 @@ class provider implements \core_privacy\local\metadata\provider,
 
     /**
      * @param int $userid
-     * @return \core_privacy\local\request\contextlist
+     * @return contextlist
      */
-    public static function _get_contexts_for_userid($userid) {
+    public static function get_contexts_for_userid(int $userid): contextlist {
         $contextlist = new contextlist();
         $sql = "
            SELECT ctx.id
@@ -83,7 +84,7 @@ class provider implements \core_privacy\local\metadata\provider,
     /**
      * @param approved_contextlist $contextlist
      */
-    public static function _export_user_data(approved_contextlist $contextlist) {
+    public static function export_user_data(approved_contextlist $contextlist) {
         global $DB;
         if (!$contextlist->count()) {
             return;
@@ -137,7 +138,7 @@ class provider implements \core_privacy\local\metadata\provider,
      * This will break CampusConnect logins for all users on the site.
      * @param \context $context
      */
-    public static function _delete_data_for_all_users_in_context(\context $context) {
+    public static function delete_data_for_all_users_in_context(\context $context) {
         global $DB;
         if (!$context) {
             return;
@@ -154,7 +155,7 @@ class provider implements \core_privacy\local\metadata\provider,
     /**
      * @param approved_contextlist $contextlist
      */
-    public static function _delete_data_for_user(approved_contextlist $contextlist) {
+    public static function delete_data_for_user(approved_contextlist $contextlist) {
         global $DB;
         if (!$contextlist->count()) {
             return;
@@ -177,5 +178,58 @@ class provider implements \core_privacy\local\metadata\provider,
             ];
             $DB->delete_records('local_campusconnect_mbr', $params);
         }
+    }
+
+    /**
+     * @param userlist $userlist
+     */
+    public static function get_users_in_context(userlist $userlist) {
+        global $DB;
+        $context = $userlist->get_context();
+        if ($context->contextlevel != CONTEXT_COURSE) {
+            return;
+        }
+        if (!$cmscourseid = $DB->get_field('local_campusconnect_crs', 'cmsid', ['courseid' => $context->instanceid])) {
+            return;
+        }
+        $sql = "
+           SELECT u.id
+             FROM {user} u
+             JOIN {auth_campusconnect} acc ON acc.username = u.username
+             JOIN {local_campusconnect_mbr} mbr ON mbr.personid = acc.personid AND mbr.personidtype = acc.personidtype
+            WHERE mbr.cmscourseid = ?
+        ";
+        $userlist->add_from_sql('id', $sql, [$cmscourseid]);
+    }
+
+    /**
+     * @param approved_userlist $userlist
+     */
+    public static function delete_data_for_users(approved_userlist $userlist) {
+        global $DB;
+        $context = $userlist->get_context();
+        if ($context->contextlevel != CONTEXT_COURSE) {
+            return;
+        }
+        if (!$userids = $userlist->get_userids()) {
+            return;
+        }
+        if (!$cmscourseid = $DB->get_field('local_campusconnect_crs', 'cmsid', ['courseid' => $context->instanceid])) {
+            return;
+        }
+        list($usql, $params) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
+        $sql = "
+            SELECT mbr.id
+              FROM {user} u
+              JOIN {auth_campusconnect} acc ON acc.username = u.username
+              JOIN {local_campusconnect_mbr} mbr ON mbr.personid = acc.personid AND mbr.personidtype = acc.personidtype
+             WHERE mbr.cmscourseid = :cmscourseid
+               AND u.id $usql
+        ";
+        $params['cmscourseid'] = $cmscourseid;
+        if (!$mbrids = $DB->get_fieldset_sql($sql, $params)) {
+            return;
+        }
+        $DB->delete_records_list('local_campusconnect_mbr', 'id', $mbrids);
     }
 }

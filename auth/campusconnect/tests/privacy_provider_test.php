@@ -145,4 +145,25 @@ class auth_campusconnect_privacy_provider_testcase extends \core_privacy\tests\p
         list($rec) = array_values($recs);
         $this->assertEquals($this->userwithrecord2->username, $rec->username);
     }
+
+    public function test_get_users_in_context() {
+        $ctx = context_system::instance();
+
+        $userlist = new \core_privacy\local\request\userlist($ctx, 'auth_campusconnect');
+        provider::get_users_in_context($userlist);
+        $this->assertCount(2, $userlist);
+
+        $this->assertEquals([$this->userwithrecord->id, $this->userwithrecord2->id], $userlist->get_userids(), '', 0.0, 10, true);
+    }
+
+    public function test_delete_data_for_users() {
+        $ctx = context_system::instance();
+
+        $approvedlist = new \core_privacy\local\request\approved_userlist($ctx, 'auth_campusconnect', [$this->userwithrecord->id]);
+        provider::delete_data_for_users($approvedlist);
+
+        $userlist = new \core_privacy\local\request\userlist($ctx, 'auth_campusconnect');
+        provider::get_users_in_context($userlist);
+        $this->assertEquals([$this->userwithrecord2->id], $userlist->get_userids());
+    }
 }

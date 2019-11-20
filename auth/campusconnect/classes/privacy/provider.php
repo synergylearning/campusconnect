@@ -26,22 +26,24 @@ namespace auth_campusconnect\privacy;
 
 use core_privacy\local\metadata\collection;
 use core_privacy\local\request\approved_contextlist;
+use core_privacy\local\request\approved_userlist;
 use core_privacy\local\request\contextlist;
 use core_privacy\local\request\helper;
 use core_privacy\local\request\transform;
+use core_privacy\local\request\userlist;
 use core_privacy\local\request\writer;
 
 defined('MOODLE_INTERNAL') || die();
 
 class provider implements \core_privacy\local\metadata\provider,
-                          \core_privacy\local\request\plugin\provider {
-    use \core_privacy\local\legacy_polyfill;
+                          \core_privacy\local\request\plugin\provider,
+                          \core_privacy\local\request\core_userlist_provider {
 
     /**
      * @param collection $collection
      * @return collection
      */
-    public static function _get_metadata(collection $collection) {
+    public static function get_metadata(collection $collection): collection {
         $collection->add_database_table(
             'auth_campusconnect',
             [
@@ -61,7 +63,7 @@ class provider implements \core_privacy\local\metadata\provider,
      * @param int $userid
      * @return \core_privacy\local\request\contextlist
      */
-    public static function _get_contexts_for_userid($userid) {
+    public static function get_contexts_for_userid(int $userid): contextlist {
         global $DB;
         $contextlist = new contextlist();
         $sql = "
@@ -79,7 +81,7 @@ class provider implements \core_privacy\local\metadata\provider,
     /**
      * @param approved_contextlist $contextlist
      */
-    public static function _export_user_data(approved_contextlist $contextlist) {
+    public static function export_user_data(approved_contextlist $contextlist) {
         global $DB;
         if (!$contextlist->count()) {
             return;
@@ -114,7 +116,7 @@ class provider implements \core_privacy\local\metadata\provider,
      * This will break CampusConnect logins for all users on the site.
      * @param \context $context
      */
-    public static function _delete_data_for_all_users_in_context(\context $context) {
+    public static function delete_data_for_all_users_in_context(\context $context) {
         global $DB;
         if (!$context) {
             return;
@@ -128,7 +130,7 @@ class provider implements \core_privacy\local\metadata\provider,
     /**
      * @param approved_contextlist $contextlist
      */
-    public static function _delete_data_for_user(approved_contextlist $contextlist) {
+    public static function delete_data_for_user(approved_contextlist $contextlist) {
         global $DB;
         if (!$contextlist->count()) {
             return;
@@ -142,4 +144,39 @@ class provider implements \core_privacy\local\metadata\provider,
             break; // Stop once we've processed the system context.
         }
     }
+
+    /**
+     * @param userlist $userlist
+     */
+    public static function get_users_in_context(userlist $userlist) {
+        $context = $userlist->get_context();
+        if ($context->contextlevel != CONTEXT_SYSTEM) {
+            return;
+        }
+        $sql = "
+           SELECT u.id
+             FROM {user} u
+             JOIN {auth_campusconnect} cc ON cc.username = u.username
+        ";
+        $userlist->add_from_sql('id', $sql, []);
+    }
+
+    /**
+     * @param approved_userlist $userlist
+     */
+    public static function delete_data_for_users(approved_userlist $userlist) {
+        global $DB;
+        $context = $userlist->get_context();
+        if ($context->contextlevel != CONTEXT_SYSTEM) {
+            return;
+        }
+        if (!$userids = $userlist->get_userids()) {
+            return;
+        }
+        list($usql, $params) = $DB->get_in_or_equal($userids);
+        $select = "id $usql";
+        $usernames = $DB->get_fieldset_select('user', 'username', $select, $params);
+        $DB->delete_records_list('auth_campusconnect', 'username', $usernames);
+    }
+
 }
